@@ -10,7 +10,12 @@ async function fetchRSSFeed(rssUrl: string, retryCount = 3) {
   if (retryCount <= 0) {
     throw new Error('Failed to fetch RSS feed');
   }
-  const parser = new Parser();
+  const parserOptions = {  // RSS parser options
+    customFields: {
+      item: ['itunes:subtitle']
+    }
+  };
+  const parser = new Parser(parserOptions);
   try {
     return await parser.parseURL(rssUrl);
   } catch (error) {
@@ -64,6 +69,7 @@ const computePrevTime = async(currentDate: Date, logger: Logger, context: Contex
     return new Date(currentDate.getTime() - updateWithinMinutes * 60 * 1000);
   }
 };
+
 export const execute = async(logger: Logger, context: Context): Promise<void> => {
   const rssUrl = core.getInput('RSS_URL', {
     required: true,
@@ -111,6 +117,7 @@ export const execute = async(logger: Logger, context: Context): Promise<void> =>
       url: updatedItem.link,
       // force to slice 140 characters
       desc: updatedItem.contentSnippet?.slice(0, 140),
+      subtitle: updatedItem['itunes:subtitle'],  // Add this line
       tags: [],
       quote: ''
     }, {
